@@ -287,7 +287,16 @@ namespace ProPRG_MIlestonetwo
             Console.Write("Enter Book ID: ");
             string bookID = Console.ReadLine();
             
-            Book bookToBorrow = books.FirstOrDefault(b => b.BookID.Equals(bookID, StringComparison.OrdinalIgnoreCase));
+            Book bookToBorrow = null; 
+            foreach (Book b in books)
+            { 
+                if (b.BookID.Equals(bookID, StringComparison.OrdinalIgnoreCase)) 
+                {
+                       bookToBorrow = b;
+                break;
+                }
+                
+            }   
 
             if (bookToBorrow == null)
             {
