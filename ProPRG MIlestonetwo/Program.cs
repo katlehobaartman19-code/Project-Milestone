@@ -270,8 +270,126 @@ namespace ProPRG_MIlestonetwo
             foreach (var member in members)
             {
                 Console.WriteLine(member.ToString()); // uses Member.ToString() 
+            } 
+
+        } 
+        static void BorrowBook(List<Book> books, List<Member> members, List<Loan> loans)
+        {
+            Console.WriteLine("\n--- Borrow a Book ---");
+
+            Console.Write("Enter Member ID: ");
+            string memberID = Console.ReadLine();
+            if (!MemberExists(members, memberID))
+            {
+                Console.WriteLine("Error: Member not found.");
+                return;
+            } 
+            Console.Write("Enter Book ID: ");
+            string bookID = Console.ReadLine();
+            
+            Book bookToBorrow = books.FirstOrDefault(b => b.BookID.Equals(bookID, StringComparison.OrdinalIgnoreCase));
+
+            if (bookToBorrow == null)
+            {
+                Console.WriteLine("Error: Book not found.");
+                return;
             }
 
+            if (!bookToBorrow.IsAvailable)
+            {
+                Console.WriteLine("Error: This book is currently checked out.");
+                return;
+            }
+
+            bookToBorrow.IsAvailable = false;
+            DateTime borrowDate = DateTime.Now.Date;
+            DateTime dueDate = borrowDate.AddDays(14); // 14-day lending policy
+            
+            loans.Add(new Loan(bookToBorrow.BookID, memberID, borrowDate, dueDate));
+
+            Console.WriteLine($"Book successfully borrowed. Due back on: {dueDate.ToShortDateString()}.");
         }
-    }
+
+        static void ReturnBook(List<Book> books, List<Loan> loans)
+        {
+            Console.WriteLine("\n--- Return a Book ---");
+            Console.Write("Enter Book ID: ");
+            string bookID = Console.ReadLine();
+
+            // Find the active loan (where ReturnDate is null)
+            Loan activeLoan = loans.FirstOrDefault(l => l.BookID.Equals(bookID, StringComparison.OrdinalIgnoreCase) && l.ReturnDate == null);
+
+            if (activeLoan == null)
+            {
+                Console.WriteLine("Error: No active loan found for this Book ID.");
+                return;
+            }
+
+            // Set the return date
+            activeLoan.ReturnDate = DateTime.Now.Date;
+
+            // Calculate overdue penalties based on the policy
+            if (activeLoan.ReturnDate > activeLoan.DueDate)
+            {
+                int overdueDays = (activeLoan.ReturnDate.Value - activeLoan.DueDate).Days;
+                activeLoan.PenaltyIncurred = overdueDays * PenaltyPerDay;
+                
+                Console.WriteLine($"\n! NOTE: Book is {overdueDays} days overdue.");
+                Console.WriteLine($"Penalty applied: {activeLoan.PenaltyIncurred:C}");
+            }
+
+            // Make the book available again
+            Book returnedBook = books.FirstOrDefault(b => b.BookID.Equals(bookID, StringComparison.OrdinalIgnoreCase));
+            if (returnedBook != null)
+            {
+                returnedBook.IsAvailable = true;
+            }
+
+            // We do NOT remove the loan from the list, because we are recording the transaction history
+            Console.WriteLine("\nBook returned successfully.");
+        }
+
+        static void DisplayOverdueBooks(List<Loan> loans)
+        {
+            Console.WriteLine("\n--- Currently Overdue Books ---");
+            
+            // Look for loans that haven't been returned and are past their due date
+            var overdueLoans = loans.Where(l => l.ReturnDate == null && l.DueDate < DateTime.Now.Date).ToList();
+
+            if (overdueLoans.Count == 0)
+            {
+                Console.WriteLine("No books are currently overdue.");
+                return;
+            }
+
+            foreach (var loan in overdueLoans)
+            {
+                int currentOverdueDays = (DateTime.Now.Date - loan.DueDate).Days;
+                decimal currentAccruedPenalty = currentOverdueDays * PenaltyPerDay;
+
+                Console.WriteLine($"Book ID: {loan.BookID} | Member ID: {loan.MemberID}");
+                Console.WriteLine($"   Due: {loan.DueDate.ToShortDateString()} | Days Late: {currentOverdueDays} | Accrued Penalty: {currentAccruedPenalty:C}");
+                Console.WriteLine("-------------------------------------------------");
+            }
+        }
+
+        static void DisplayTransactionHistory(List<Loan> loans)
+        {
+            Console.WriteLine("\n--- Library Transaction History ---");
+
+            if (loans.Count == 0)
+            {
+                Console.WriteLine("No transactions recorded yet.");
+                return;
+            }
+
+            foreach (var loan in loans)
+            {
+                string status = loan.ReturnDate == null ? "Still Borrowed" : $"Returned on {loan.ReturnDate.Value.ToShortDateString()}";
+                string penaltyStr = loan.PenaltyIncurred > 0 ? $" | Penalty: {loan.PenaltyIncurred:C}" : "";
+
+                Console.WriteLine($"Book: {loan.BookID} | Member: {loan.MemberID} | Borrowed: {loan.BorrowDate.ToShortDateString()} | {status}{penaltyStr}");
+            }
+        }
+    } 
 }
