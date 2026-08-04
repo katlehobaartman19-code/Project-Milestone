@@ -261,15 +261,23 @@ enum BookStatus
                 Console.WriteLine("Member not found.");
         }
 
-        static void SortBooks(List<Book> books)
-        {
-            books.Sort((a, b) => a.Title.CompareTo(b.Title));
-            Console.WriteLine("Books sorted.");
-        }
+       static void SortBooks(List<Book> books)
+{
+    books.Sort((a, b) => a.Title.CompareTo(b.Title));
 
+    Console.WriteLine("\nBooks sorted alphabetically (A-Z):");
+    foreach (var book in books)
+    {
+        Console.WriteLine($"{book.BookID} - {book.Title} - {book.Author} - {book.Status}");
+    }
+}
         static void SortMembers(List<Member> members)
         {
-            members.Sort((a, b) => a.Name.CompareTo(b.Name));
-            Console.WriteLine("Members sorted.");
-        }
+      members.Sort((a, b) => a.Name.CompareTo(b.Name));
+      Console.WriteLine("\nMembers sorted alphabetically (A-Z):");
+      foreach (var member in members)
+      {
+    Console.WriteLine($"{member.MemberID} - {member.Name}");
+      }
     }
+}
